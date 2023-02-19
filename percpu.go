@@ -45,6 +45,11 @@ type padded[T any] struct {
 // Specifically, this means that the implementation does guarantee that a 64-bit
 // integer will be aligned to the 64-bit boundary on 32-bit systems.
 // See bugs section in the documentation of sync/atomic.
+//
+// If the number of processors or GOMAXPROCS changes, the pointer will live
+// at least until the next call to Do.
+// The implementation is not guaranteed to garbage collect the pointer
+// if the number of processors or GOMAXPROCS shrinks.
 func (p *Pointer[T]) Get() *T {
 	shardID := getProcID()
 
