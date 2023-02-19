@@ -33,7 +33,7 @@ import (
 // state, it does not generate the same values from run to run. Therefore, a
 // Source is always created with a randomized seed and Source.Seed is a no-op.
 type Source struct {
-	vs *percpu.Values // of *sval
+	vs *percpu.Pointer[sval]
 }
 
 type lockedPCGSource struct {
@@ -53,7 +53,7 @@ func NewSource() *Source {
 		panic(err)
 	}
 	seed := binary.BigEndian.Uint64(b[:])
-	vs := percpu.NewValues(func() interface{} {
+	vs := percpu.NewPointer(func() *sval {
 		var sv sval
 		sv.pcg.Seed(atomic.AddUint64(&seed, 1) - 1)
 		return &sv
@@ -67,7 +67,7 @@ func (s *Source) Seed(uint64) {}
 
 // Uint64 returns a pseudo-random 64-bit integer as a uint64.
 func (s *Source) Uint64() uint64 {
-	sv := s.vs.Get().(*sval)
+	sv := s.vs.Get()
 	sv.mu.Lock()
 	defer sv.mu.Unlock()
 	return sv.pcg.Uint64()
@@ -81,8 +81,7 @@ var globalRand = rand.New(NewSource())
 // To produce a distribution with a different rate parameter,
 // callers can adjust the output using:
 //
-//  sample = ExpFloat64() / desiredRateParameter
-//
+//	sample = ExpFloat64() / desiredRateParameter
 func ExpFloat64() float64 { return globalRand.ExpFloat64() }
 
 // Float32 returns, as a float32, a pseudo-random number in [0.0,1.0).
@@ -118,8 +117,7 @@ func Intn(n int) int { return globalRand.Intn(n) }
 // To produce a different normal distribution, callers can
 // adjust the output using:
 //
-//  sample = NormFloat64() * desiredStdDev + desiredMean
-//
+//	sample = NormFloat64() * desiredStdDev + desiredMean
 func NormFloat64() float64 { return globalRand.NormFloat64() }
 
 // Perm returns, as a slice of n ints, a pseudo-random permutation of the integers [0,n).

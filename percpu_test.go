@@ -25,7 +25,7 @@ attemptLoop:
 		start := make(chan struct{})
 		var wg sync.WaitGroup
 		var mu sync.Mutex
-		vs := NewValues(func() interface{} { return new(int) })
+		vs := NewPointer[int](func() *int { return new(int) })
 		for i := 0; i < numProcs; i++ {
 			wg.Add(1)
 			go func() {
@@ -33,7 +33,7 @@ attemptLoop:
 				seen := make(map[*int]int)
 				<-start
 				for i := 0; i < 1e6*(attempt+1); i++ {
-					p := vs.Get().(*int)
+					p := vs.Get()
 					seen[p]++
 				}
 				var pmax *int

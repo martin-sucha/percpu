@@ -13,20 +13,20 @@ import (
 //
 // For example, suppose goroutine G1 runs
 //
-//   counter.Add(1)
-//   counter.Add(2)
+//	counter.Add(1)
+//	counter.Add(2)
 //
 // and, concurrently, G2 runs
 //
-//   t0 := counter.Reset()
-//   // wait for G1 to finish executing
-//   t1 := counter.Load()
+//	t0 := counter.Reset()
+//	// wait for G1 to finish executing
+//	t1 := counter.Load()
 //
 // The value of t0 may be any of 0, 1, 2, or 3.
 // The value of t1 may be any of 0, 1, 2, or 3 as well.
 // However, t0+t1 must equal 3.
 type Counter struct {
-	vs *Values // of *cval
+	vs *Pointer[cval]
 }
 
 type cval struct {
@@ -36,20 +36,20 @@ type cval struct {
 
 // NewCounter returns a fresh Counter initialized to zero.
 func NewCounter() *Counter {
-	vs := NewValues(func() interface{} { return new(cval) })
+	vs := NewPointer(func() *cval { return new(cval) })
 	return &Counter{vs: vs}
 }
 
 // Add adds n to the total count.
 func (c *Counter) Add(n int64) {
-	atomic.AddInt64(&c.vs.Get().(*cval).n, n)
+	atomic.AddInt64(&c.vs.Get().n, n)
 }
 
 // Load computes the total counter value.
 func (c *Counter) Load() int64 {
 	var sum int64
-	c.vs.Do(func(v interface{}) {
-		sum += atomic.LoadInt64(&v.(*cval).n)
+	c.vs.Do(func(v *cval) {
+		sum += atomic.LoadInt64(&v.n)
 	})
 	return sum
 }
@@ -57,8 +57,8 @@ func (c *Counter) Load() int64 {
 // Reset sets the counter to zero and reports the old value.
 func (c *Counter) Reset() int64 {
 	var sum int64
-	c.vs.Do(func(v interface{}) {
-		sum += atomic.SwapInt64(&v.(*cval).n, 0)
+	c.vs.Do(func(v *cval) {
+		sum += atomic.SwapInt64(&v.n, 0)
 	})
 	return sum
 }
