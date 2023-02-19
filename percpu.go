@@ -13,6 +13,7 @@ import (
 // value simultaneously from many goroutines.
 //
 // A zero value of a Values is ready to use.
+// Values must not be copied after first use.
 type Values[T any] struct {
 	pad1 cpu.CacheLinePad // prevent false sharing
 
