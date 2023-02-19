@@ -39,7 +39,7 @@ type padded[T any] struct {
 // All access of the returned value must use further synchronization
 // mechanisms.
 //
-// If a value for a given CPU does not exist yet, Values allocates a new value.
+// If a value for a given CPU does not exist yet, Values allocates a new zero value.
 // The value is guaranteed to be allocated in a memory block
 // with sufficient padding to avoid false sharing.
 // Standard value alignment guarantees apply.
