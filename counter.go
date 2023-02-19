@@ -26,14 +26,12 @@ import (
 // The value of t1 may be any of 0, 1, 2, or 3 as well.
 // However, t0+t1 must equal 3.
 type Counter struct {
-	vs *Pointer[atomic.Int64]
+	vs Pointer[atomic.Int64]
 }
 
 // NewCounter returns a fresh Counter initialized to zero.
 func NewCounter() *Counter {
-	return &Counter{
-		vs: &Pointer[atomic.Int64]{},
-	}
+	return &Counter{}
 }
 
 // Add adds n to the total count.
