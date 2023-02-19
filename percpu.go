@@ -8,12 +8,12 @@ import (
 	_ "unsafe"
 )
 
-// Pointer is a sharded set of pointers which have an affinity for a particular
+// Values is a sharded set of values which have an affinity for a particular
 // processor. This can be used to avoid cache contention when updating a shared
 // value simultaneously from many goroutines.
 //
-// A zero value of a Pointer is ready to use.
-type Pointer[T any] struct {
+// A zero value of a Values is ready to use.
+type Values[T any] struct {
 	pad1 cpu.CacheLinePad // prevent false sharing
 
 	// shards keeps the per-CPU pointers.
@@ -30,7 +30,7 @@ type padded[T any] struct {
 	pad2 cpu.CacheLinePad // prevent false sharing
 }
 
-// Get returns one of the pointers in p.
+// Get returns a pointer to one of the values in p.
 //
 // The pointer tends to be the one associated with the current processor.
 // However, goroutines can migrate at any time, and it may be the case
@@ -38,7 +38,7 @@ type padded[T any] struct {
 // All access of the returned value must use further synchronization
 // mechanisms.
 //
-// If a value for given CPU does not exist yet, Pointer allocates it.
+// If a value for given CPU does not exist yet, Values allocates it.
 // The value is guaranteed to be allocated in a memory block
 // with sufficient padding to avoid false sharing.
 // Standard value alignment guarantees apply.
@@ -46,11 +46,11 @@ type padded[T any] struct {
 // integer will be aligned to the 64-bit boundary on 32-bit systems.
 // See bugs section in the documentation of sync/atomic.
 //
-// If the number of processors or GOMAXPROCS changes, the pointer will live
+// If the number of processors or GOMAXPROCS changes, the extra values will live
 // at least until the next call to Do.
-// The implementation is not guaranteed to garbage collect the pointer
+// The implementation is not guaranteed to garbage collect the values
 // if the number of processors or GOMAXPROCS shrinks.
-func (p *Pointer[T]) Get() *T {
+func (p *Values[T]) Get() *T {
 	shardID := getProcID()
 
 	shards := p.shards.Load()
@@ -83,8 +83,8 @@ func (p *Pointer[T]) Get() *T {
 	return &slot.v
 }
 
-// Do runs fn on all pointers in p.
-func (p *Pointer[T]) Do(fn func(p *T)) {
+// Do runs fn on all values in p.
+func (p *Values[T]) Do(fn func(p *T)) {
 	shards := p.shards.Load()
 	if shards == nil {
 		return
