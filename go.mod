@@ -1,4 +1,4 @@
-module github.com/cespare/percpu
+module github.com/martin-sucha/percpu
 
 go 1.20
 

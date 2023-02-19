@@ -18,7 +18,7 @@ package clrand
 import (
 	cryptorand "crypto/rand"
 	"encoding/binary"
-	"github.com/cespare/percpu"
+	"github.com/martin-sucha/percpu"
 	"golang.org/x/exp/rand"
 	"sync"
 	"sync/atomic"
