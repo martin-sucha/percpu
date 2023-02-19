@@ -31,7 +31,7 @@ type padded[T any] struct {
 	pad2 cpu.CacheLinePad // prevent false sharing
 }
 
-// Get returns a pointer to one of the values in p.
+// Get returns a pointer to one of the values in v.
 //
 // The pointer tends to be the one associated with the current processor.
 // However, goroutines can migrate at any time, and it may be the case
@@ -51,10 +51,10 @@ type padded[T any] struct {
 // at least until the next call to Do.
 // The implementation is not guaranteed to garbage collect the values
 // if the number of processors or GOMAXPROCS shrinks.
-func (p *Values[T]) Get() *T {
+func (v *Values[T]) Get() *T {
 	shardID := getProcID()
 
-	shards := p.shards.Load()
+	shards := v.shards.Load()
 	for shards == nil || shardID >= len(*shards) {
 		// GOMAXPROCS has changed or shards was not initialized.
 		newShardCount := runtime.GOMAXPROCS(0)
@@ -72,21 +72,24 @@ func (p *Values[T]) Get() *T {
 			newShards[i] = new(padded[T])
 		}
 
-		if p.shards.CompareAndSwap(shards, &newShards) {
+		if v.shards.CompareAndSwap(shards, &newShards) {
 			shards = &newShards
 			break
 		}
 		// Another goroutine beat us, retry.
-		shards = p.shards.Load()
+		shards = v.shards.Load()
 	}
 
 	slot := (*shards)[shardID]
 	return &slot.v
 }
 
-// Do runs fn on all values in p.
-func (p *Values[T]) Do(fn func(p *T)) {
-	shards := p.shards.Load()
+// Do runs fn on all values in v.
+//
+// The pointers might be concurrently used by other goroutines.
+// The user is responsible for synchronizing access.
+func (v *Values[T]) Do(fn func(p *T)) {
+	shards := v.shards.Load()
 	if shards == nil {
 		return
 	}
