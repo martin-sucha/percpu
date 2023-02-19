@@ -39,7 +39,7 @@ type padded[T any] struct {
 // All access of the returned value must use further synchronization
 // mechanisms.
 //
-// If a value for given CPU does not exist yet, Values allocates it.
+// If a value for a given CPU does not exist yet, Values allocates it.
 // The value is guaranteed to be allocated in a memory block
 // with sufficient padding to avoid false sharing.
 // Standard value alignment guarantees apply.
@@ -47,10 +47,8 @@ type padded[T any] struct {
 // integer will be aligned to the 64-bit boundary on 32-bit systems.
 // See bugs section in the documentation of sync/atomic.
 //
-// If the number of processors or GOMAXPROCS changes, the extra values will live
-// at least until the next time Do is called.
-// The implementation is not guaranteed to garbage collect the values
-// if the number of processors or GOMAXPROCS shrinks.
+// A pointer returned by Get will be observed by Do forever,
+// there isn't a way to free any of the values.
 func (v *Values[T]) Get() *T {
 	shardID := getProcID()
 
@@ -86,8 +84,11 @@ func (v *Values[T]) Get() *T {
 
 // Do runs fn on all values in v.
 //
+// fn may be called zero or more times.
+// fn might observe a new p before any goroutine calling Get has a chance to initialize it.
+//
 // The pointers might be concurrently used by other goroutines.
-// The user is responsible for synchronizing access.
+// The user is responsible for synchronizing access to p.
 func (v *Values[T]) Do(fn func(p *T)) {
 	shards := v.shards.Load()
 	if shards == nil {
