@@ -43,9 +43,9 @@ type padded[T any] struct {
 // The value is guaranteed to be allocated in a memory block
 // with sufficient padding to avoid false sharing.
 // Standard value alignment guarantees apply.
-// Specifically, this means that the implementation does guarantee that a 64-bit
+// This means that the implementation does NOT guarantee that a 64-bit
 // integer will be aligned to the 64-bit boundary on 32-bit systems.
-// See bugs section in the documentation of sync/atomic.
+// See also Bugs section in the documentation of sync/atomic.
 //
 // A pointer returned by Get will be observed by Do forever,
 // there isn't a way to free any of the values.
