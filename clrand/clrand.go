@@ -32,7 +32,7 @@ import (
 // Source is always created with a randomized seed and Source.Seed is a no-op.
 type Source struct {
 	seed atomic.Uint64
-	vs   *percpu.Values[lockedPCGSource]
+	vs   percpu.Values[lockedPCGSource]
 }
 
 type lockedPCGSource struct {
@@ -48,8 +48,7 @@ func NewSource() *Source {
 		panic(err)
 	}
 	seed := binary.BigEndian.Uint64(b[:])
-	vs := &percpu.Values[lockedPCGSource]{}
-	source := &Source{vs: vs}
+	source := &Source{}
 	source.seed.Store(seed)
 	return source
 }
