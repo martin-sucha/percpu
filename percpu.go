@@ -48,7 +48,7 @@ type padded[T any] struct {
 // See bugs section in the documentation of sync/atomic.
 //
 // If the number of processors or GOMAXPROCS changes, the extra values will live
-// at least until the next call to Do.
+// at least until the next time Do is called.
 // The implementation is not guaranteed to garbage collect the values
 // if the number of processors or GOMAXPROCS shrinks.
 func (v *Values[T]) Get() *T {
