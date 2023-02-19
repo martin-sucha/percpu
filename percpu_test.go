@@ -25,7 +25,7 @@ attemptLoop:
 		start := make(chan struct{})
 		var wg sync.WaitGroup
 		var mu sync.Mutex
-		vs := NewPointer[int](func() *int { return new(int) })
+		var vs Pointer[int]
 		for i := 0; i < numProcs; i++ {
 			wg.Add(1)
 			go func() {

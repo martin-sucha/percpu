@@ -20,7 +20,6 @@ import (
 	"encoding/binary"
 	"github.com/cespare/percpu"
 	"golang.org/x/exp/rand"
-	"golang.org/x/sys/cpu"
 	"sync"
 	"sync/atomic"
 )
@@ -32,18 +31,14 @@ import (
 // state, it does not generate the same values from run to run. Therefore, a
 // Source is always created with a randomized seed and Source.Seed is a no-op.
 type Source struct {
-	vs *percpu.Pointer[sval]
+	seed atomic.Uint64
+	vs   *percpu.Pointer[lockedPCGSource]
 }
 
 type lockedPCGSource struct {
-	mu  sync.Mutex
-	pcg rand.PCGSource
-}
-
-type sval struct {
-	pad1 cpu.CacheLinePad
-	lockedPCGSource
-	pad2 cpu.CacheLinePad
+	mu          sync.Mutex
+	pcg         rand.PCGSource
+	initialized bool
 }
 
 // NewSource creates a Source with a randomized seed.
@@ -53,12 +48,10 @@ func NewSource() *Source {
 		panic(err)
 	}
 	seed := binary.BigEndian.Uint64(b[:])
-	vs := percpu.NewPointer(func() *sval {
-		var sv sval
-		sv.pcg.Seed(atomic.AddUint64(&seed, 1) - 1)
-		return &sv
-	})
-	return &Source{vs: vs}
+	vs := &percpu.Pointer[lockedPCGSource]{}
+	source := &Source{vs: vs}
+	source.seed.Store(seed)
+	return source
 }
 
 // Seed is a no-op. It is only defined for compatibility with the rand.Source
@@ -70,6 +63,9 @@ func (s *Source) Uint64() uint64 {
 	sv := s.vs.Get()
 	sv.mu.Lock()
 	defer sv.mu.Unlock()
+	if !sv.initialized {
+		sv.pcg.Seed(s.seed.Add(1) - 1)
+	}
 	return sv.pcg.Uint64()
 }
 

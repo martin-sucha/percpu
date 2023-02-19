@@ -1,7 +1,6 @@
 package percpu
 
 import (
-	"golang.org/x/sys/cpu"
 	"sync/atomic"
 )
 
@@ -27,31 +26,26 @@ import (
 // The value of t1 may be any of 0, 1, 2, or 3 as well.
 // However, t0+t1 must equal 3.
 type Counter struct {
-	vs *Pointer[cval]
-}
-
-type cval struct {
-	pad1 cpu.CacheLinePad // prevent false sharing
-	n    int64
-	pad2 cpu.CacheLinePad // prevent false sharing
+	vs *Pointer[atomic.Int64]
 }
 
 // NewCounter returns a fresh Counter initialized to zero.
 func NewCounter() *Counter {
-	vs := NewPointer(func() *cval { return new(cval) })
-	return &Counter{vs: vs}
+	return &Counter{
+		vs: &Pointer[atomic.Int64]{},
+	}
 }
 
 // Add adds n to the total count.
 func (c *Counter) Add(n int64) {
-	atomic.AddInt64(&c.vs.Get().n, n)
+	c.vs.Get().Add(n)
 }
 
 // Load computes the total counter value.
 func (c *Counter) Load() int64 {
 	var sum int64
-	c.vs.Do(func(v *cval) {
-		sum += atomic.LoadInt64(&v.n)
+	c.vs.Do(func(v *atomic.Int64) {
+		sum += v.Load()
 	})
 	return sum
 }
@@ -59,8 +53,8 @@ func (c *Counter) Load() int64 {
 // Reset sets the counter to zero and reports the old value.
 func (c *Counter) Reset() int64 {
 	var sum int64
-	c.vs.Do(func(v *cval) {
-		sum += atomic.SwapInt64(&v.n, 0)
+	c.vs.Do(func(v *atomic.Int64) {
+		sum += v.Swap(0)
 	})
 	return sum
 }
