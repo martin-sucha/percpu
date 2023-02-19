@@ -42,7 +42,7 @@ func (c *Counter) Add(n int64) {
 // Load computes the total counter value.
 func (c *Counter) Load() int64 {
 	var sum int64
-	c.vs.Do(func(v *atomic.Int64) {
+	c.vs.Range(func(v *atomic.Int64) {
 		sum += v.Load()
 	})
 	return sum
@@ -51,7 +51,7 @@ func (c *Counter) Load() int64 {
 // Reset sets the counter to zero and reports the old value.
 func (c *Counter) Reset() int64 {
 	var sum int64
-	c.vs.Do(func(v *atomic.Int64) {
+	c.vs.Range(func(v *atomic.Int64) {
 		sum += v.Swap(0)
 	})
 	return sum

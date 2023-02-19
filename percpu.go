@@ -47,7 +47,7 @@ type padded[T any] struct {
 // integer will be aligned to the 64-bit boundary on 32-bit systems.
 // See also Bugs section in the documentation of sync/atomic.
 //
-// A pointer returned by Get will be observed by Do forever,
+// A pointer returned by Get will be observed by Range forever,
 // there isn't a way to free any of the values.
 func (v *Values[T]) Get() *T {
 	shardID := getProcID()
@@ -82,14 +82,14 @@ func (v *Values[T]) Get() *T {
 	return &slot.v
 }
 
-// Do runs fn on all values in v.
+// Range runs fn on all values in v.
 //
 // fn may be called zero or more times.
 // fn might observe a new p before any goroutine calling Get has a chance to initialize it.
 //
 // The pointers might be concurrently used by other goroutines.
 // The user is responsible for synchronizing access to p.
-func (v *Values[T]) Do(fn func(p *T)) {
+func (v *Values[T]) Range(fn func(p *T)) {
 	shards := v.shards.Load()
 	if shards == nil {
 		return
