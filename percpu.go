@@ -54,7 +54,7 @@ func (p *Pointer[T]) Get() *T {
 	shardID := getProcID()
 
 	shards := p.shards.Load()
-	for shards == nil || shardID > len(*shards) {
+	for shards == nil || shardID >= len(*shards) {
 		// GOMAXPROCS has changed or shards was not initialized.
 		newShardCount := runtime.GOMAXPROCS(0)
 		if shardID >= newShardCount {
