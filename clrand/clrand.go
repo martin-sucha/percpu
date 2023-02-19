@@ -18,12 +18,11 @@ package clrand
 import (
 	cryptorand "crypto/rand"
 	"encoding/binary"
-	"sync"
-	"sync/atomic"
-	"unsafe"
-
 	"github.com/cespare/percpu"
 	"golang.org/x/exp/rand"
+	"golang.org/x/sys/cpu"
+	"sync"
+	"sync/atomic"
 )
 
 // A Source is a source of uniformly-distributed pseudo-random uint64 values
@@ -42,8 +41,9 @@ type lockedPCGSource struct {
 }
 
 type sval struct {
+	pad1 cpu.CacheLinePad
 	lockedPCGSource
-	pad [128 - unsafe.Sizeof(lockedPCGSource{})%128]byte
+	pad2 cpu.CacheLinePad
 }
 
 // NewSource creates a Source with a randomized seed.

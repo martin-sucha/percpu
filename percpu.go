@@ -2,6 +2,7 @@
 package percpu
 
 import (
+	"golang.org/x/sys/cpu"
 	"runtime"
 	_ "unsafe"
 )
@@ -10,7 +11,9 @@ import (
 // processor. This can be used to avoid cache contention when updating a shared
 // value simultaneously from many goroutines.
 type Pointer[T any] struct {
+	pad1   cpu.CacheLinePad // prevent false sharing
 	shards []*T
+	pad2   cpu.CacheLinePad // prevent false sharing
 }
 
 // NewPointer constructs a Values using the provided constructor function to

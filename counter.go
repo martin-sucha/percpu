@@ -1,6 +1,7 @@
 package percpu
 
 import (
+	"golang.org/x/sys/cpu"
 	"sync/atomic"
 )
 
@@ -30,8 +31,9 @@ type Counter struct {
 }
 
 type cval struct {
-	n   int64
-	pad [120]byte // prevent false sharing
+	pad1 cpu.CacheLinePad // prevent false sharing
+	n    int64
+	pad2 cpu.CacheLinePad // prevent false sharing
 }
 
 // NewCounter returns a fresh Counter initialized to zero.
